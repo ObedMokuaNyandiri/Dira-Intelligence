@@ -1,0 +1,53 @@
+@import "tailwindcss";
+
+@theme {
+  --color-obsidian-900: #050505;
+  --color-obsidian-800: #0A0A0A;
+  --color-obsidian-700: #121212;
+  --color-obsidian-600: #1A1A1A;
+  
+  --color-gold-500: #C8A97E;
+  --color-gold-400: #D4BA96;
+  --color-gold-600: #A88656;
+  
+  --color-slate-blue-500: #3B82F6;
+  
+  /* Status Colors */
+  --color-status-act: #EF4444;       /* Binding */
+  --color-status-regulation: #F59E0B;/* Regulation */
+  --color-status-policy: #3B82F6;    /* Policy */
+  --color-status-strategy: #8B5CF6;  /* Strategy */
+  --color-status-draft: #64748B;     /* Draft */
+}
+
+@layer base {
+  :root {
+    --background: var(--color-obsidian-800);
+    --foreground: #F5F5F5;
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    background-image: radial-gradient(circle at 50% -20%, #1a1a1a 0%, var(--background) 70%);
+    background-attachment: fixed;
+    min-height: 100vh;
+  }
+}
+
+/* Custom Scrollbar for a premium feel */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
