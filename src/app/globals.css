@@ -22,22 +22,20 @@
 
 @layer base {
   :root {
-    --background: var(--color-obsidian-800);
+    --background: #000000;
     --foreground: #F5F5F5;
   }
 
   body {
-    background-color: var(--background);
-    color: var(--foreground);
+    background-color: #000000;
+    color: #F5F5F5;
     font-family: 'Inter', sans-serif;
     -webkit-font-smoothing: antialiased;
-    background-image: radial-gradient(circle at 50% -20%, #1a1a1a 0%, var(--background) 70%);
-    background-attachment: fixed;
     min-height: 100vh;
   }
 }
 
-/* Custom Scrollbar for a premium feel */
+/* Custom Scrollbar - Grok Dark Style */
 ::-webkit-scrollbar {
   width: 6px;
 }
@@ -45,9 +43,95 @@
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #333;
+  background: #262626;
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #555;
+  background: #3F3F3F;
+}
+
+/* ============================================================
+   EXECUTIVE PRINT & PDF STYLING (PURE WHITE, A4 PORTRAIT)
+   ============================================================ */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 1.2cm 1.2cm 1.2cm 1.2cm;
+  }
+
+  html, body, #__next, div, main, header {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    background-image: none !important;
+    box-shadow: none !important;
+  }
+
+  body {
+    font-size: 10pt !important;
+    line-height: 1.5 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Force all linear containers in print */
+  .dossier-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 1.5rem !important;
+    width: 100% !important;
+  }
+
+  .dossier-col {
+    display: contents !important;
+  }
+
+  /* Prevent elements from breaking mid-box, mid-card, or mid-sentence */
+  .break-inside-avoid,
+  .print-avoid-break,
+  .print-card,
+  article,
+  blockquote {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Prevent headings from orphaning at the bottom of a page */
+  h1, h2, h3, h4, h5, h6, .print-heading {
+    break-after: avoid !important;
+    page-break-after: avoid !important;
+  }
+
+  /* Explicit print card appearance: crisp white with clear slate boundaries */
+  .print-card-clean {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    box-shadow: none !important;
+    color: #0f172a !important;
+    border-radius: 8px !important;
+  }
+
+  .print-text-dark {
+    color: #0f172a !important;
+  }
+
+  .print-text-muted {
+    color: #475569 !important;
+  }
+
+  .print-border {
+    border-color: #cbd5e1 !important;
+  }
+
+  /* Remove all web blurs, glows, and interactive indicators */
+  * {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  /* Never print interactive links or href URLs */
+  a[href]:after {
+    content: none !important;
+  }
 }
