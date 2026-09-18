@@ -57,18 +57,18 @@ export default function LoginPage() {
     <div className="min-h-screen w-full bg-[#000000] text-neutral-100 flex flex-col justify-between font-sans selection:bg-[#C8A97E]/30 selection:text-white">
       
       {/* Top Header */}
-      <header className="w-full border-b border-[#1A1A1A] bg-[#000000] px-6 py-4 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-3 hover:opacity-90 transition-opacity">
-          <div className="w-8 h-8 rounded-lg bg-[#111111] border border-[#242424] flex items-center justify-center">
+      <header className="w-full border-b border-[#1A1A1A] bg-[#000000] px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
+        <Link href="/" className="flex items-center gap-2.5 hover:opacity-90 transition-opacity">
+          <div className="w-8 h-8 rounded-lg bg-[#111111] border border-[#242424] flex items-center justify-center shrink-0">
             <Scale className="w-4 h-4 text-[#C8A97E]" />
           </div>
-          <span className="font-bold tracking-wider text-sm text-white">
-            DIRA INTELLIGENCE
+          <span className="font-bold tracking-wider text-xs sm:text-sm text-white">
+            DIRA<span className="hidden sm:inline"> INTELLIGENCE</span>
           </span>
         </Link>
         <Link 
           href="/signup" 
-          className="text-xs font-medium text-[#C8A97E] hover:underline"
+          className="text-xs font-semibold text-[#C8A97E] hover:underline"
         >
           Sign Up &rarr;
         </Link>
@@ -76,23 +76,23 @@ export default function LoginPage() {
 
       {/* Main Login Card */}
       <main className="w-full flex-1 flex items-center justify-center p-4 sm:p-6">
-        <div className="w-full max-w-md bg-[#0A0A0A] border border-[#222222] rounded-2xl p-7 sm:p-9 shadow-2xl">
+        <div className="w-full max-w-md bg-[#0A0A0A] border border-[#222222] rounded-2xl p-5 sm:p-9 shadow-2xl">
           
-          <div className="text-center mb-8">
-            <div className="w-12 h-12 rounded-xl bg-[#111111] border border-[#262626] flex items-center justify-center mx-auto mb-4">
+          <div className="text-center mb-6 sm:mb-8">
+            <div className="w-12 h-12 rounded-xl bg-[#111111] border border-[#262626] flex items-center justify-center mx-auto mb-3.5 sm:mb-4">
               <Lock className="w-5 h-5 text-[#C8A97E]" />
             </div>
-            <h1 className="text-2xl font-bold tracking-tight text-white">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
               Sign In
             </h1>
-            <p className="text-sm text-neutral-300 mt-2">
+            <p className="text-xs sm:text-sm text-neutral-300 mt-1.5 sm:mt-2">
               Sign in to access Kenyan legal and compliance intelligence.
             </p>
           </div>
 
           {/* Error Banner */}
           {error && (
-            <div className="mb-6 p-4 rounded-xl bg-[#1E0E11] border border-[#8A232D] flex items-start gap-3 text-left">
+            <div className="mb-5 sm:mb-6 p-3.5 sm:p-4 rounded-xl bg-[#1E0E11] border border-[#8A232D] flex items-start gap-3 text-left">
               <AlertCircle className="w-4 h-4 text-[#FF6B72] shrink-0 mt-0.5" />
               <p className="text-xs text-[#FF6B72] leading-relaxed font-medium">
                 {error}
@@ -100,11 +100,11 @@ export default function LoginPage() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4 sm:gap-5">
             
             {/* Email Field */}
-            <div className="flex flex-col gap-2 text-left">
-              <label className="text-sm font-semibold text-neutral-100">
+            <div className="flex flex-col gap-1.5 sm:gap-2 text-left">
+              <label className="text-xs sm:text-sm font-semibold text-neutral-100">
                 Email Address
               </label>
               <input
@@ -113,13 +113,13 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="e.g. name@company.co.ke"
-                className="w-full px-4 py-3 rounded-xl bg-[#141414] border border-[#333333] text-white text-sm placeholder:text-neutral-400 focus:border-[#C8A97E] focus:ring-1 focus:ring-[#C8A97E] focus:outline-none transition-all"
+                className="w-full px-4 py-3 rounded-xl bg-[#141414] border border-[#333333] text-white text-base sm:text-sm placeholder:text-neutral-500 focus:border-[#C8A97E] focus:ring-1 focus:ring-[#C8A97E] focus:outline-none transition-all"
               />
             </div>
 
             {/* Password Field */}
-            <div className="flex flex-col gap-2 text-left">
-              <label className="text-sm font-semibold text-neutral-100">
+            <div className="flex flex-col gap-1.5 sm:gap-2 text-left">
+              <label className="text-xs sm:text-sm font-semibold text-neutral-100">
                 Password
               </label>
               <div className="relative">
@@ -129,13 +129,13 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
-                  className="w-full px-4 py-3 rounded-xl bg-[#141414] border border-[#333333] text-white text-sm placeholder:text-neutral-400 focus:border-[#C8A97E] focus:ring-1 focus:ring-[#C8A97E] focus:outline-none transition-all pr-11"
+                  className="w-full px-4 py-3 rounded-xl bg-[#141414] border border-[#333333] text-white text-base sm:text-sm placeholder:text-neutral-500 focus:border-[#C8A97E] focus:ring-1 focus:ring-[#C8A97E] focus:outline-none transition-all pr-11"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   aria-label={showPassword ? "Hide password" : "Show password"}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-white p-1 cursor-pointer"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-white p-2 cursor-pointer"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>

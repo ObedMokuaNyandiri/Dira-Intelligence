@@ -32,8 +32,21 @@
     font-family: 'Inter', sans-serif;
     -webkit-font-smoothing: antialiased;
     min-height: 100vh;
+    min-height: 100dvh;
+    -webkit-overflow-scrolling: touch;
+    overflow-x: hidden;
   }
 }
+
+/* Mobile Safe Areas */
+.safe-bottom {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
+.safe-top {
+  padding-top: max(1rem, env(safe-area-inset-top));
+}
+
 
 /* Custom Scrollbar - Grok Dark Style */
 ::-webkit-scrollbar {

@@ -263,10 +263,34 @@ export default function DiraIntelligenceTerminal() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query: targetQuery, userId: currentUser.id }),
       });
-      if (!res.ok) {
-        throw new Error(`HTTP error! status: ${res.status}`);
+      let data: any = null;
+      try {
+        data = await res.json();
+      } catch (jsonErr) {
+        console.warn("Could not parse JSON response:", jsonErr);
       }
-      const data = await res.json();
+
+      if (!res.ok) {
+        setAnswer({
+          conclusion: data?.conclusion || "Unable to retrieve legal and regulatory information.",
+          whyItMatters: data?.whyItMatters || data?.error || `Service returned status ${res.status}. Please verify your deployment environment variables and try again.`,
+          risks: data?.risks || [
+            {
+              area: "Service Configuration",
+              severity: 2,
+              description: "Ensure NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, and GEMINI_API_KEY are set in your deployment environment."
+            }
+          ],
+          sources: data?.sources || []
+        });
+        setState("ANSWER");
+        return;
+      }
+
+      if (!data) {
+        throw new Error("Empty response received from intelligence engine.");
+      }
+
       setAnswer(data);
       setState("ANSWER");
 
@@ -315,12 +339,18 @@ export default function DiraIntelligenceTerminal() {
         }
       }
 
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
       setAnswer({
         conclusion: "Unable to retrieve legal and regulatory information.",
-        whyItMatters: "A connection issue occurred while searching the knowledge base. Please try asking again.",
-        risks: [],
+        whyItMatters: err?.message || "A connection issue occurred while searching the knowledge base. Please try asking again.",
+        risks: [
+          {
+            area: "Connection & Configuration Notice",
+            severity: 2,
+            description: "Verify that NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, and GEMINI_API_KEY are configured in your deployment settings."
+          }
+        ],
         sources: []
       });
       setState("ANSWER");
@@ -395,35 +425,35 @@ export default function DiraIntelligenceTerminal() {
     <div className="min-h-screen w-full bg-[#000000] text-neutral-100 flex flex-col font-sans selection:bg-[#C8A97E]/30 selection:text-white print:bg-white print:text-slate-900">
       
       {/* Top Navigation Bar */}
-      <header className="w-full border-b border-[#1A1A1A] bg-[#000000] px-6 py-4 flex items-center justify-between sticky top-0 z-40 print:hidden">
-        <div className="flex items-center gap-3">
+      <header className="w-full border-b border-[#1A1A1A] bg-[#000000]/95 backdrop-blur-md px-3 sm:px-6 py-3 flex items-center justify-between sticky top-0 z-40 print:hidden">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
             title={isSidebarOpen ? "Hide search history" : "Show search history"}
-            className="p-1.5 px-2.5 rounded-lg bg-[#111111] hover:bg-[#1A1A1A] border border-[#262626] text-neutral-300 hover:text-white transition-all cursor-pointer flex items-center gap-2 shadow-2xs"
+            className="p-2 sm:px-2.5 rounded-lg bg-[#111111] hover:bg-[#1A1A1A] border border-[#262626] text-neutral-300 hover:text-white transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs shrink-0"
           >
             <PanelLeft className="w-4 h-4 text-[#C8A97E]" />
             <span className="hidden sm:inline text-xs font-medium text-neutral-200">History</span>
             {history.length > 0 && (
-              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-[#181818] text-[#C8A97E] border border-[#333333]">
+              <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-[#181818] text-[#C8A97E] border border-[#333333]">
                 {history.length}
               </span>
             )}
           </button>
 
-          <div className="w-8 h-8 rounded-lg bg-[#111111] border border-[#242424] flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg bg-[#111111] border border-[#242424] flex items-center justify-center shrink-0">
             <Scale className="w-4 h-4 text-[#C8A97E]" />
           </div>
-          <div>
-            <span className="font-bold tracking-wider text-sm text-white">
-              DIRA INTELLIGENCE
+          <div className="truncate">
+            <span className="font-bold tracking-wider text-xs sm:text-sm text-white truncate">
+              DIRA<span className="hidden sm:inline"> INTELLIGENCE</span>
             </span>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           {state === "ANSWER" && (
-            <div className="flex items-center gap-2.5 mr-2">
+            <div className="flex items-center gap-1.5 sm:gap-2.5">
               <button
                 onClick={() => {
                   if (!currentUser) {
@@ -434,32 +464,35 @@ export default function DiraIntelligenceTerminal() {
                   setQuery("");
                   setAnswer(null);
                 }}
-                className="px-3.5 py-1.5 rounded-lg bg-[#111111] hover:bg-[#1A1A1A] border border-[#262626] text-neutral-300 hover:text-white text-xs font-medium transition-all flex items-center gap-2 shadow-xs cursor-pointer"
+                title="Ask Another Question"
+                className="p-2 sm:px-3.5 sm:py-1.5 rounded-lg bg-[#111111] hover:bg-[#1A1A1A] border border-[#262626] text-neutral-300 hover:text-white text-xs font-medium transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
               >
                 <ArrowLeft className="w-3.5 h-3.5 text-neutral-400" />
-                <span>Ask Another Question</span>
+                <span className="hidden md:inline">Ask Another Question</span>
+                <span className="hidden sm:inline md:hidden">New Query</span>
               </button>
               <button 
                 onClick={() => window.print()} 
-                className="px-3.5 py-1.5 rounded-lg bg-[#C8A97E] hover:bg-[#D4BA96] text-[#000000] text-xs font-semibold transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
+                title="Download PDF Executive Brief"
+                className="p-2 sm:px-3.5 sm:py-1.5 rounded-lg bg-[#C8A97E] hover:bg-[#D4BA96] text-[#000000] text-xs font-semibold transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
               >
                 <Download className="w-3.5 h-3.5" />
-                <span>Download PDF</span>
+                <span className="hidden sm:inline">PDF</span>
               </button>
             </div>
           )}
 
           {currentUser ? (
-            <div className="flex items-center gap-3 pl-3 border-l border-[#222222]">
-              <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-full bg-[#1A1A1A] border border-[#333333] flex items-center justify-center text-xs font-bold text-[#C8A97E]">
+            <div className="flex items-center gap-2 sm:gap-3 pl-2 sm:pl-3 border-l border-[#222222]">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-full bg-[#1A1A1A] border border-[#333333] flex items-center justify-center text-xs font-bold text-[#C8A97E] shrink-0">
                   {(currentUser.fullName || currentUser.email).charAt(0).toUpperCase()}
                 </div>
-                <div className="hidden sm:flex flex-col text-left">
-                  <span className="text-xs font-semibold text-white leading-tight">
+                <div className="hidden lg:flex flex-col text-left max-w-[130px] xl:max-w-[180px]">
+                  <span className="text-xs font-semibold text-white leading-tight truncate">
                     {currentUser.fullName || currentUser.email}
                   </span>
-                  <span className="text-[10px] text-neutral-400 leading-tight">
+                  <span className="text-[10px] text-neutral-400 leading-tight truncate">
                     {currentUser.role || currentUser.organization || "Executive"}
                   </span>
                 </div>
@@ -473,16 +506,16 @@ export default function DiraIntelligenceTerminal() {
               </button>
             </div>
           ) : (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2">
               <Link
                 href="/login"
-                className="px-3 py-1.5 rounded-lg bg-[#111111] hover:bg-[#1A1A1A] border border-[#262626] text-neutral-300 hover:text-white text-xs font-medium transition-all cursor-pointer"
+                className="px-2.5 sm:px-3 py-1.5 rounded-lg bg-[#111111] hover:bg-[#1A1A1A] border border-[#262626] text-neutral-300 hover:text-white text-xs font-medium transition-all cursor-pointer"
               >
                 Sign In
               </Link>
               <Link
                 href="/signup"
-                className="px-3.5 py-1.5 rounded-lg bg-[#C8A97E] hover:bg-[#D4BA96] text-[#000000] text-xs font-semibold transition-all cursor-pointer"
+                className="px-2.5 sm:px-3.5 py-1.5 rounded-lg bg-[#C8A97E] hover:bg-[#D4BA96] text-[#000000] text-xs font-semibold transition-all cursor-pointer"
               >
                 Sign Up
               </Link>
@@ -498,18 +531,18 @@ export default function DiraIntelligenceTerminal() {
         {isSidebarOpen && (
           <div 
             onClick={() => setIsSidebarOpen(false)}
-            className="fixed inset-0 bg-black/60 z-30 lg:hidden print:hidden" 
+            className="fixed inset-0 bg-black/70 backdrop-blur-xs z-40 lg:hidden print:hidden" 
           />
         )}
 
         {/* Search & Response History Sidebar */}
         <aside
           className={`
-            ${isSidebarOpen ? 'translate-x-0 w-80' : '-translate-x-full w-0 lg:w-0'}
-            fixed lg:static inset-y-0 left-0 z-40 lg:z-auto
-            h-[calc(100vh-65px)] bg-[#070707] border-r border-[#1C1C1C]
+            ${isSidebarOpen ? 'translate-x-0 w-[85vw] max-w-[320px] lg:w-80' : '-translate-x-full w-0 lg:w-0'}
+            fixed lg:static inset-y-0 left-0 z-50 lg:z-auto
+            h-full lg:h-[calc(100vh-57px)] bg-[#070707] border-r border-[#1C1C1C]
             flex flex-col transition-all duration-300 ease-in-out
-            overflow-hidden shrink-0 print:hidden
+            overflow-hidden shrink-0 print:hidden shadow-2xl lg:shadow-none
           `}
         >
           {/* Sidebar Top: Header & New Question */}
@@ -724,50 +757,54 @@ export default function DiraIntelligenceTerminal() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -12 }}
               transition={{ duration: 0.3 }}
-              className="my-auto w-full max-w-3xl flex flex-col"
+              className="my-auto w-full max-w-3xl flex flex-col py-2 sm:py-6"
             >
-              <div className="text-center mb-8">
-                <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
-                  Ask a legal or compliance question
+              <div className="text-center mb-6 sm:mb-8">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#141414] border border-[#262626] text-xs font-medium text-[#C8A97E] mb-3 sm:mb-4">
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  <span>Authoritative Kenyan Statutory Intelligence</span>
+                </div>
+                <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white tracking-tight leading-tight">
+                  Ask a legal or regulatory question
                 </h2>
-                <p className="text-neutral-300 text-sm mt-3 max-w-xl mx-auto">
-                  Ask about Kenyan data protection rules, foreign cloud hosting, AI verification, or statutory penalties.
+                <p className="text-neutral-300 text-xs sm:text-sm mt-2 sm:mt-3 max-w-xl mx-auto leading-relaxed px-2">
+                  Instant guidance on the Data Protection Act 2019, Kenya Cloud Policy, Vision 2030, and statutory compliance mandates.
                 </p>
               </div>
 
               {/* Clean Grok Dark Query Card */}
-              <div className="w-full bg-[#0A0A0A] border border-[#222222] focus-within:border-[#C8A97E]/70 focus-within:ring-1 focus-within:ring-[#C8A97E]/30 rounded-2xl p-5 shadow-2xl transition-all">
+              <div className="w-full bg-[#0A0A0A] border border-[#222222] focus-within:border-[#C8A97E]/70 focus-within:ring-1 focus-within:ring-[#C8A97E]/30 rounded-2xl p-4 sm:p-5 shadow-2xl transition-all">
                 <textarea
                   ref={inputRef}
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  placeholder="e.g., Can we use third-party AI to verify customer identity?"
-                  className="w-full bg-transparent text-base sm:text-lg text-white placeholder:text-neutral-400 outline-none resize-none leading-relaxed"
+                  placeholder="e.g., Are we required to conduct a DPIA before processing biometric data?"
+                  className="w-full bg-transparent text-sm sm:text-base md:text-lg text-white placeholder:text-neutral-500 outline-none resize-none leading-relaxed min-h-[72px] sm:min-h-[88px]"
                   rows={3}
                 />
                 
-                <div className="flex items-center justify-between pt-4 border-t border-[#1A1A1A] mt-2">
-                  <span className="text-xs text-neutral-400 font-mono">Press Enter to submit</span>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-3 sm:pt-4 border-t border-[#1A1A1A] gap-2.5 sm:gap-0 mt-2">
+                  <span className="hidden sm:inline text-xs text-neutral-500 font-mono">Press Enter ↵ to submit</span>
                   <button
                     disabled={!query.trim()}
                     onClick={() => handleSubmit()}
-                    className={`px-5 py-2 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 ${
+                    className={`w-full sm:w-auto px-5 py-2.5 sm:py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer ${
                       query.trim()
-                        ? 'bg-[#C8A97E] hover:bg-[#D4BA96] text-[#000000] cursor-pointer shadow-sm'
+                        ? 'bg-[#C8A97E] hover:bg-[#D4BA96] text-[#000000] shadow-sm'
                         : 'bg-[#181818] text-neutral-500 cursor-not-allowed'
                     }`}
                   >
-                    <span>Get Answer</span>
+                    <span>Get Legal Answer</span>
                     <ChevronRight className="w-4 h-4" />
                   </button>
                 </div>
               </div>
 
               {/* Common Questions */}
-              <div className="mt-8 text-left">
-                <p className="text-xs font-semibold text-neutral-400 mb-2.5">Common questions to try:</p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <div className="mt-6 sm:mt-8 text-left">
+                <p className="text-xs font-semibold text-neutral-400 mb-2.5 px-0.5">Common questions to explore:</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-2.5">
                   {[
                     "Can we use third party AI to authenticate customer data?",
                     "Can government agencies store citizen health data in foreign clouds?",
@@ -777,9 +814,9 @@ export default function DiraIntelligenceTerminal() {
                     <button
                       key={idx}
                       onClick={() => handleSubmit(prompt)}
-                      className="p-3.5 bg-[#0A0A0A] hover:bg-[#141414] border border-[#222222] hover:border-[#C8A97E]/50 rounded-xl text-left text-neutral-200 hover:text-white text-xs transition-all flex items-center justify-between group cursor-pointer shadow-2xs"
+                      className="p-3 sm:p-3.5 bg-[#0A0A0A] hover:bg-[#141414] border border-[#222222] hover:border-[#C8A97E]/50 rounded-xl text-left text-neutral-200 hover:text-white text-xs leading-relaxed transition-all flex items-center justify-between group cursor-pointer shadow-2xs min-h-[44px]"
                     >
-                      <span className="line-clamp-1">{prompt}</span>
+                      <span className="line-clamp-2">{prompt}</span>
                       <ChevronRight className="w-3.5 h-3.5 text-neutral-500 group-hover:text-[#C8A97E] shrink-0 ml-2" />
                     </button>
                   ))}
@@ -935,39 +972,39 @@ export default function DiraIntelligenceTerminal() {
               ) : (
                 
                 /* CASE B: FULL STRUCTURED ANSWER */
-                <div className="dossier-grid grid grid-cols-1 lg:grid-cols-12 gap-6 items-start print:flex print:flex-col print:gap-5">
+                <div className="dossier-grid grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 items-start pb-16 lg:pb-0 print:pb-0 print:flex print:flex-col print:gap-5">
                   
                   {/* Left Column: Direct Answer, Explanation, and Official Sources */}
-                  <div className="dossier-col lg:col-span-7 flex flex-col gap-6 print:contents">
+                  <div className="dossier-col lg:col-span-7 flex flex-col gap-5 sm:gap-6 print:contents">
                     
                     {/* Direct Answer Block */}
-                    <div className="bg-[#0A0A0A] print:bg-white border border-[#222222] print:border-slate-300 rounded-2xl print:rounded-xl p-6 sm:p-7 shadow-md print:shadow-none break-inside-avoid print:break-inside-avoid print:order-1">
+                    <div className="bg-[#0A0A0A] print:bg-white border border-[#222222] print:border-slate-300 rounded-2xl print:rounded-xl p-5 sm:p-7 shadow-md print:shadow-none break-inside-avoid print:break-inside-avoid print:order-1">
                       <div className="flex items-center gap-2 mb-3 pb-2 border-b border-[#1A1A1A] print:border-slate-100">
                         <Scale className="w-4 h-4 text-[#C8A97E]" />
                         <span className="text-xs font-semibold tracking-wide text-neutral-300 print:text-slate-700 uppercase">
                           Direct Answer
                         </span>
                       </div>
-                      <p className="text-xl sm:text-2xl print:text-base text-white print:text-slate-950 font-normal print:font-semibold leading-snug">
+                      <p className="text-lg sm:text-xl lg:text-2xl print:text-base text-white print:text-slate-950 font-normal print:font-semibold leading-snug">
                         {answer.conclusion}
                       </p>
                     </div>
 
                     {/* Legal & Regulatory Explanation Block */}
-                    <div className="bg-[#0A0A0A] print:bg-white border border-[#222222] print:border-slate-300 rounded-2xl print:rounded-xl p-6 sm:p-7 shadow-md print:shadow-none break-inside-avoid print:break-inside-avoid print:order-2">
+                    <div className="bg-[#0A0A0A] print:bg-white border border-[#222222] print:border-slate-300 rounded-2xl print:rounded-xl p-5 sm:p-7 shadow-md print:shadow-none break-inside-avoid print:break-inside-avoid print:order-2">
                       <div className="flex items-center gap-2 mb-3 pb-2 border-b border-[#1A1A1A] print:border-slate-100">
                         <Building2 className="w-4 h-4 text-[#C8A97E]" />
                         <span className="text-xs font-semibold tracking-wide text-neutral-300 print:text-slate-700 uppercase">
                           Legal & Regulatory Explanation
                         </span>
                       </div>
-                      <p className="text-sm sm:text-base print:text-xs text-neutral-200 print:text-slate-700 leading-relaxed">
+                      <p className="text-xs sm:text-sm lg:text-base print:text-xs text-neutral-200 print:text-slate-700 leading-relaxed">
                         {answer.whyItMatters}
                       </p>
                     </div>
 
                     {/* Primary Evidentiary Citations */}
-                    <div className="bg-[#0A0A0A] print:bg-white border border-[#222222] print:border-slate-300 rounded-2xl print:rounded-xl p-6 sm:p-7 shadow-md print:shadow-none break-inside-avoid print:break-inside-avoid print:order-4">
+                    <div className="bg-[#0A0A0A] print:bg-white border border-[#222222] print:border-slate-300 rounded-2xl print:rounded-xl p-5 sm:p-7 shadow-md print:shadow-none break-inside-avoid print:break-inside-avoid print:order-4">
                       <div className="flex items-center gap-2 mb-4 pb-2 border-b border-[#1A1A1A] print:border-slate-100">
                         <FileCheck className="w-4 h-4 text-[#C8A97E]" />
                         <span className="text-xs font-semibold tracking-wide text-neutral-300 print:text-slate-700 uppercase">
@@ -986,26 +1023,26 @@ export default function DiraIntelligenceTerminal() {
                               <div 
                                 key={idx} 
                                 onClick={() => setActiveSource(source)}
-                                className="bg-[#101010] hover:bg-[#161616] border border-[#222222] hover:border-[#383838] print:bg-slate-50 print:border-slate-300 rounded-xl p-4 cursor-pointer transition-all duration-200 group break-inside-avoid print:break-inside-avoid"
+                                className="bg-[#101010] hover:bg-[#161616] border border-[#222222] hover:border-[#383838] print:bg-slate-50 print:border-slate-300 rounded-xl p-3.5 sm:p-4 cursor-pointer transition-all duration-200 group break-inside-avoid print:break-inside-avoid"
                               >
                                 <div className="flex items-start justify-between gap-3 mb-2">
-                                  <div className="flex flex-col gap-0.5">
-                                    <h4 className="text-sm font-semibold text-white print:text-slate-950 group-hover:text-[#C8A97E] transition-colors">
+                                  <div className="flex flex-col gap-0.5 min-w-0">
+                                    <h4 className="text-xs sm:text-sm font-semibold text-white print:text-slate-950 group-hover:text-[#C8A97E] transition-colors line-clamp-1">
                                       {source.title}
                                     </h4>
                                     {source.section && (
-                                      <span className={`text-xs font-medium ${isUnverified ? 'text-[#F87171] print:text-rose-700' : 'text-[#C8A97E] print:text-slate-700'}`}>
+                                      <span className={`text-[11px] sm:text-xs font-medium ${isUnverified ? 'text-[#F87171] print:text-rose-700' : 'text-[#C8A97E] print:text-slate-700'} line-clamp-1`}>
                                         {source.section}
                                       </span>
                                     )}
                                   </div>
                                   <div className="flex items-center gap-1.5 shrink-0">
                                     {isUnverified && (
-                                      <span className="text-[9px] font-bold px-2 py-0.5 rounded border uppercase bg-[#2A0E12] text-[#F87171] border-[#7F1D1D] print:bg-rose-100 print:text-rose-900 print:border-rose-300">
+                                      <span className="text-[9px] font-bold px-1.5 sm:px-2 py-0.5 rounded border uppercase bg-[#2A0E12] text-[#F87171] border-[#7F1D1D] print:bg-rose-100 print:text-rose-900 print:border-rose-300">
                                         UNVERIFIED
                                       </span>
                                     )}
-                                    <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded border uppercase ${
+                                    <span className={`text-[9px] sm:text-[10px] font-bold px-2 sm:px-2.5 py-0.5 rounded border uppercase ${
                                       isBinding 
                                         ? 'bg-[#181818] print:bg-slate-100 text-[#C8A97E] print:text-slate-900 border-[#C8A97E] print:border-slate-300' 
                                         : 'bg-[#181818] print:bg-slate-100 text-neutral-300 print:text-slate-800 border-[#383838] print:border-slate-300'
@@ -1026,10 +1063,10 @@ export default function DiraIntelligenceTerminal() {
                   </div>
 
                   {/* Right Column: Key Compliance Risks & Requirements */}
-                  <div className="dossier-col lg:col-span-5 flex flex-col gap-6 print:contents">
+                  <div className="dossier-col lg:col-span-5 flex flex-col gap-5 sm:gap-6 print:contents">
                     
                     {/* Risk & Requirement Cards */}
-                    <div className="bg-[#0A0A0A] print:bg-white border border-[#222222] print:border-slate-300 rounded-2xl print:rounded-xl p-6 sm:p-7 shadow-md print:shadow-none break-inside-avoid print:break-inside-avoid print:order-3">
+                    <div className="bg-[#0A0A0A] print:bg-white border border-[#222222] print:border-slate-300 rounded-2xl print:rounded-xl p-5 sm:p-7 shadow-md print:shadow-none break-inside-avoid print:break-inside-avoid print:order-3">
                       <div className="flex items-center gap-2 mb-4 pb-2 border-b border-[#1A1A1A] print:border-slate-100">
                         <AlertTriangle className="w-4 h-4 text-amber-500 print:text-amber-600" />
                         <span className="text-xs font-semibold tracking-wide text-neutral-300 print:text-slate-700 uppercase">
@@ -1049,13 +1086,13 @@ export default function DiraIntelligenceTerminal() {
                             return (
                               <div 
                                 key={idx}
-                                className="bg-[#101010] print:bg-slate-50 border border-[#222222] print:border-slate-300 rounded-xl p-4 flex flex-col gap-2 break-inside-avoid print:break-inside-avoid"
+                                className="bg-[#101010] print:bg-slate-50 border border-[#222222] print:border-slate-300 rounded-xl p-3.5 sm:p-4 flex flex-col gap-2 break-inside-avoid print:break-inside-avoid"
                               >
                                 <div className="flex items-center justify-between gap-2">
-                                  <span className="text-xs font-bold text-white print:text-slate-900">
+                                  <span className="text-xs font-bold text-white print:text-slate-900 leading-snug">
                                     {risk.area}
                                   </span>
-                                  <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded border ${
+                                  <span className={`text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded border shrink-0 ${
                                     isCritical 
                                       ? 'bg-[#1E0E11] print:bg-red-50 text-[#FF6B72] print:text-red-700 border-[#8A232D] print:border-red-300' 
                                       : 'bg-[#1E1508] print:bg-amber-50 text-[#FBBF24] print:text-amber-800 border-[#8A5C1B] print:border-amber-300'
@@ -1092,6 +1129,32 @@ export default function DiraIntelligenceTerminal() {
                 </div>
               )}
 
+              {/* Mobile Floating Action Dock (Screen only, visible on mobile/tablet) */}
+              <div className="fixed bottom-3 inset-x-3 z-30 lg:hidden flex items-center justify-between gap-2.5 p-2 bg-[#0A0A0A]/95 border border-[#2E2E2E] rounded-2xl backdrop-blur-xl shadow-2xl safe-bottom print:hidden">
+                <button
+                  onClick={() => {
+                    if (!currentUser) {
+                      setState("LOGIN");
+                      return;
+                    }
+                    setState("ASK");
+                    setQuery("");
+                    setAnswer(null);
+                  }}
+                  className="flex-1 py-2.5 px-3 rounded-xl bg-[#181818] hover:bg-[#222222] border border-[#333333] text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5 text-[#C8A97E]" />
+                  <span>Ask Another</span>
+                </button>
+                <button
+                  onClick={() => window.print()}
+                  className="flex-1 py-2.5 px-3 rounded-xl bg-[#C8A97E] hover:bg-[#D4BA96] text-[#000000] text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-sm"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Export PDF</span>
+                </button>
+              </div>
+
             </motion.div>
           )}
 
@@ -1100,33 +1163,37 @@ export default function DiraIntelligenceTerminal() {
 
       </div>
 
-      {/* --- EVIDENCE INSPECTION MODAL --- */}
+      {/* --- EVIDENCE INSPECTION MODAL (Adaptive Bottom-Sheet on mobile, Centered Modal on desktop) --- */}
       <AnimatePresence>
         {activeSource && (
           <div 
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-sm print:hidden"
+            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-6 bg-black/80 backdrop-blur-xs print:hidden"
             onClick={() => setActiveSource(null)}
           >
             <motion.div 
-              initial={{ scale: 0.98, opacity: 0 }} 
-              animate={{ scale: 1, opacity: 1 }} 
-              exit={{ scale: 0.98, opacity: 0 }} 
+              initial={{ y: "100%", opacity: 0 }} 
+              animate={{ y: 0, opacity: 1 }} 
+              exit={{ y: "100%", opacity: 0 }}
+              transition={{ type: "spring", damping: 28, stiffness: 350 }}
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-2xl bg-[#0A0A0A] border border-[#262626] rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]"
+              className="w-full sm:max-w-2xl bg-[#0A0A0A] border-t sm:border border-[#262626] rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85dvh] sm:max-h-[85vh] safe-bottom"
             >
-              <div className="p-5 border-b border-[#1F1F1F] bg-[#121212] flex justify-between items-center">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-[#181818] border border-[#2E2E2E] flex items-center justify-center">
+              {/* Mobile Drag Indicator */}
+              <div className="w-12 h-1 bg-neutral-700 rounded-full mx-auto mt-2.5 sm:hidden" />
+
+              <div className="p-4 sm:p-5 border-b border-[#1F1F1F] bg-[#121212] flex justify-between items-center">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-8 h-8 rounded-lg bg-[#181818] border border-[#2E2E2E] flex items-center justify-center shrink-0">
                     <FileText className="w-4 h-4 text-[#C8A97E]" />
                   </div>
-                  <div>
-                    <h3 className="text-sm font-bold text-white">{activeSource.title}</h3>
+                  <div className="min-w-0 truncate">
+                    <h3 className="text-xs sm:text-sm font-bold text-white truncate">{activeSource.title}</h3>
                     <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-xs font-semibold text-neutral-300 uppercase">{activeSource.status}</span>
+                      <span className="text-[10px] sm:text-xs font-semibold text-neutral-300 uppercase">{activeSource.status}</span>
                       {activeSource.section && (
                         <>
                           <span className="text-neutral-500 text-xs">•</span>
-                          <span className="text-xs font-medium text-[#C8A97E]">{activeSource.section}</span>
+                          <span className="text-[10px] sm:text-xs font-medium text-[#C8A97E] truncate">{activeSource.section}</span>
                         </>
                       )}
                     </div>
@@ -1135,14 +1202,14 @@ export default function DiraIntelligenceTerminal() {
                 <button 
                   onClick={() => setActiveSource(null)} 
                   aria-label="Close modal"
-                  className="w-8 h-8 rounded-lg bg-[#1A1A1A] hover:bg-[#262626] text-neutral-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer text-sm font-mono"
+                  className="w-8 h-8 rounded-lg bg-[#1A1A1A] hover:bg-[#262626] text-neutral-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer text-sm font-mono shrink-0 ml-2"
                 >
                   ✕
                 </button>
               </div>
-              <div className="p-6 overflow-y-auto">
-                <div className="bg-[#121212] rounded-xl p-5 border-l-4 border-[#C8A97E]">
-                  <p className="text-sm text-neutral-200 leading-relaxed font-serif whitespace-pre-wrap">
+              <div className="p-4 sm:p-6 overflow-y-auto">
+                <div className="bg-[#121212] rounded-xl p-4 sm:p-5 border-l-4 border-[#C8A97E]">
+                  <p className="text-xs sm:text-sm text-neutral-200 leading-relaxed font-serif whitespace-pre-wrap">
                     {activeSource.excerpt}
                   </p>
                 </div>
